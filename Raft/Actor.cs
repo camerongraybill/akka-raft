@@ -17,6 +17,7 @@ namespace Raft
     using RPC = Raft.Messages.RPC;
     using ClientInteractionBase = Raft.Messages.ClientInteraction;
     using ClientInteractionCommand = Raft.Messages.ClientInteraction.Command;
+    using ClientInteractionUnstableRead = Raft.Messages.ClientInteraction.UnstableRead;
 
     public class Actor<TStateMachine, TStateMachineCommand, TStateMachineResult> : ReceiveActor
         where TStateMachine : IStateMachine<TStateMachineCommand, TStateMachineResult>, new()
@@ -222,6 +223,14 @@ namespace Raft
                 Context.Self.Forward(obj);
         }
 
+        private void InstantRead<T>(T obj)
+        {
+            ReplyWith(new ClientInteractionUnstableRead::Response<TStateMachine>
+            {
+                Value = _currentState
+            });
+        }
+
         private void Follower()
         {
             Debug.Assert(!_leaderBlastTimeout.IsRunning, "Leader Timeout should not be running as a follower");
@@ -240,6 +249,7 @@ namespace Raft
 
             Receive<AppendEntries::Result>(EmptyRPCCallback);
             Receive<RequestVote::Result>(EmptyRPCCallback);
+            Receive<ClientInteractionUnstableRead::Arguments>(InstantRead);
         }
 
         private void ClientRedirect(object obj)
@@ -377,6 +387,7 @@ namespace Raft
             Receive<ClientInteractionCommand::Arguments<TStateMachineCommand>>(ClientRedirect);
             Receive<RequestVote::Arguments>(EmptyRPCCallback);
             Receive<AppendEntries::Result>(EmptyRPCCallback);
+            Receive<ClientInteractionUnstableRead::Arguments>(InstantRead);
         }
 
         private void CandidateOnAppendEntriesArguments(AppendEntries.Arguments<TStateMachineCommand> obj)
@@ -441,6 +452,7 @@ namespace Raft
             Receive<RequestVote::Arguments>(EmptyRPCCallback);
             Receive<AppendEntries::Arguments<TStateMachineCommand>>(EmptyRPCCallback);
             Receive<ClientInteractionCommand::Arguments<TStateMachineCommand>>(LeaderOnCommand);
+            Receive<ClientInteractionUnstableRead::Arguments>(InstantRead);
         }
 
         private void HeartbeatTo(int id)
