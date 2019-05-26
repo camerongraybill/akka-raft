@@ -46,7 +46,7 @@ namespace Main
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(system,TimeSpan.FromSeconds(1), actorCount, "akka://system/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(system,TimeSpan.FromSeconds(1), actorCount, "akka://system/user/", 3);
             var runningActors = new HashSet<int>(Enumerable.Range(1, actorCount));
             var stoppedActors = new HashSet<int>();
 

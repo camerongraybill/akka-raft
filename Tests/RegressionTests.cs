@@ -28,8 +28,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 3);
             await client.RunCommand(new KeyValueStore<int>.WriteCommand
             {
                 Index = "an index",
@@ -56,8 +56,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 2);
             await client.RunCommand(new KeyValueStore<int>.WriteCommand
             {
                 Index = "an index",
@@ -89,8 +89,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             for (var i = 1; i <= actorCount; i++)
             {
                 var aval = i;
@@ -148,8 +148,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             for (var i = 1; i <= actorCount; i++)
             {
                 Sys.ActorSelection(new IdResolver("akka://test/user/").ResolveAbsoluteId(i)).Tell(PoisonPill.Instance);
@@ -221,8 +221,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             await client.RunCommand(new KeyValueStore<int>.WriteCommand
             {
                 Index = "an index",
@@ -247,8 +247,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             await client.RunCommand(new KeyValueStore<int>.WriteCommand
             {
                 Index = "an index",
@@ -278,8 +278,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             for (var i = 1; i <= actorCount; i++)
             {
                 var aval = i;
@@ -335,8 +335,8 @@ namespace Tests
                 .ToArray();
 
             var client =
-                new RaftClient<KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
-                    actorCount, "akka://test/user/");
+                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(Sys, TimeSpan.FromSeconds(1),
+                    actorCount, "akka://test/user/", 1);
             for (var i = 1; i <= actorCount; i++)
             {
                 Sys.ActorSelection(new IdResolver("akka://test/user/").ResolveAbsoluteId(i)).Tell(PoisonPill.Instance);
