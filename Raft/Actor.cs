@@ -59,9 +59,9 @@ namespace Raft
 
         private readonly int _numActors;
 
-        private TStateMachine _currentState;
+        private TStateMachine _committedState;
 
-        private TStateMachine _currentStateUnconfirmed;
+        private TStateMachine _tentativeState;
 
         private ActorSelection GetActorById(int id)
         {
@@ -114,7 +114,7 @@ namespace Raft
             while (_volatileState.CommitIndex > _volatileState.LastApplied)
             {
                 _volatileState.LastApplied++;
-                var result = _currentState.RunCommand(_persistentState.GetEntry(_volatileState.LastApplied).Value);
+                var result = _committedState.RunCommand(_persistentState.GetEntry(_volatileState.LastApplied).Value);
                 Context.GetLogger().Info("Applying state with index " + _volatileState.LastApplied.ToString() + ", " + _persistentState.GetEntry(_volatileState.LastApplied).Value.ToString());
                 _index?.AssignRequestResult(_volatileState.LastApplied, result);
             }
@@ -148,8 +148,8 @@ namespace Raft
                 _persistentState = DiskPersistentState<TStateMachineCommand>.Create("./states/" + _myId.ToString());
             else
                 _persistentState = new InMemoryPersistentState<TStateMachineCommand>();
-            _currentState = new TStateMachine();
-            _currentStateUnconfirmed = new TStateMachine();
+            _committedState = new TStateMachine();
+            _tentativeState = new TStateMachine();
             _numActors = numActors;
             _electionTimeout = new TimeoutManager(
                 Context.System.Scheduler,
@@ -230,7 +230,7 @@ namespace Raft
         {
             ReplyWith(new ClientInteractionUnstableRead::Response<TStateMachine>
             {
-                Value = _currentStateUnconfirmed
+                Value = _tentativeState
             });
         }
 
@@ -301,10 +301,10 @@ namespace Raft
         private void UpdateUnstableState()
         {
             // Unstable Read Update
-            _currentStateUnconfirmed = new TStateMachine();
+            _tentativeState = new TStateMachine();
             for (var i = 1; i <= _persistentState.LogLength; i++)
             {
-                _currentStateUnconfirmed.RunCommand(_persistentState.GetEntry(i).Value);
+                _tentativeState.RunCommand(_persistentState.GetEntry(i).Value);
             }
         }
         
