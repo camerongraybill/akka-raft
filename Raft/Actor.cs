@@ -61,6 +61,8 @@ namespace Raft
 
         private TStateMachine _currentState;
 
+        private TStateMachine _currentStateUnconfirmed;
+
         private ActorSelection GetActorById(int id)
         {
             return Context.System.ActorSelection(IdResolver.ResolveId(id));
@@ -147,6 +149,7 @@ namespace Raft
             else
                 _persistentState = new InMemoryPersistentState<TStateMachineCommand>();
             _currentState = new TStateMachine();
+            _currentStateUnconfirmed = new TStateMachine();
             _numActors = numActors;
             _electionTimeout = new TimeoutManager(
                 Context.System.Scheduler,
@@ -227,7 +230,7 @@ namespace Raft
         {
             ReplyWith(new ClientInteractionUnstableRead::Response<TStateMachine>
             {
-                Value = _currentState
+                Value = _currentStateUnconfirmed
             });
         }
 
@@ -295,6 +298,16 @@ namespace Raft
             }
         }
 
+        private void UpdateUnstableState()
+        {
+            // Unstable Read Update
+            _currentStateUnconfirmed = new TStateMachine();
+            for (var i = 1; i <= _persistentState.LogLength; i++)
+            {
+                _currentStateUnconfirmed.RunCommand(_persistentState.GetEntry(i).Value);
+            }
+        }
+        
         private void FollowerOnAppendEntriesArguments(AppendEntries.Arguments<TStateMachineCommand> obj)
         {
             if (OnAnyRaftMessage(obj))
@@ -347,6 +360,8 @@ namespace Raft
                         {
                             SetCommitIndex(Math.Min(obj.LeaderCommit, _persistentState.LogLength)); // 5
                         }
+
+                        UpdateUnstableState();
 
                         ReplyWith(new AppendEntries::Result
                         {
@@ -494,7 +509,9 @@ namespace Raft
 
             _leaderVolatileState.MatchIndex[_myId] = _persistentState.LogLength;
             _leaderVolatileState.NextIndex[_myId] = _persistentState.LogLength + 1;
-
+            
+            UpdateUnstableState();
+            
             for (var id = 1; id < _numActors; id++)
             {
                 if (id == _myId) continue;
