@@ -14,7 +14,14 @@ namespace TicketSeller
     {
         public int NumTickets { get; set; }
     }
+    
+    public class HowManyLeft {}
 
+    public class RemainingTickets
+    {
+        public int RemainingTix { get; set; }
+    }
+    
     public class GotTickets
     {
         public HashSet<Ticket> Tickets { get; set; }
@@ -98,6 +105,13 @@ namespace TicketSeller
                     Context.GetLogger().Error("Client was unable to request initial tickets");
                     Context.Self.Tell(PoisonPill.Instance);
                 }
+            });
+            ReceiveAsync<HowManyLeft>(async left =>
+            {
+                Sender.Tell(new RemainingTickets
+                {
+                    RemainingTix = await GetNumUncommitted() - _committedTickets.Count
+                });
             });
             ReceiveAsync<SendHelp>(OnSendHelp);
 

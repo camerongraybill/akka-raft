@@ -72,6 +72,8 @@ Commands:
         stop raft actor x
     start x (int)
         start raft actor x
+    read x (int)
+        ask client x how many tickets are left
     get x y (int)
         get x tickets from client y
 ";
@@ -139,6 +141,10 @@ Commands:
                             Console.WriteLine(intArg.ToString() + " is already running");
                         }
 
+                        break;
+                    case "read":
+                        var res = await clients[intArg - 1].Ask<RemainingTickets>(new HowManyLeft());
+                        Console.WriteLine($"{intArg.ToString()} says there are {res.RemainingTix.ToString()} Tickets Left");
                         break;
                     case "get":
                         int.TryParse(split[2], out var clientId);
