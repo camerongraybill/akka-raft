@@ -1,11 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.TestKit.Xunit;
-using Main;
+using KeyValueStore;
 using Raft;
 using Raft.Utilities;
 using Xunit;

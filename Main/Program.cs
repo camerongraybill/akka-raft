@@ -7,6 +7,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Raft;
 using Raft.Utilities;
+using TicketSeller;
 
 namespace Main
 {
@@ -16,8 +17,8 @@ namespace Main
         {
             var system = ActorSystem.Create("system", ConfigurationFactory.ParseString(@"
       akka {
-        stdout-loglevel = INFO
-        loglevel = INFO
+        stdout-loglevel = WARNING
+        loglevel = WARNING
         log-config-on-start = off
 
         # Got logging config from stackoverflow
@@ -39,18 +40,23 @@ namespace Main
                 Directory.Delete("./states/", true);
 
             var props =
-                Raft.Actor<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>.Props(
+                Raft.Actor<TicketStore, Command, Response>.Props(
                     actorCount);
             var _ = Enumerable.Range(1, actorCount)
                 .Select(iter => system.ActorOf(props, IdResolver.CreateName(iter)))
                 .ToArray();
 
-            var client =
-                new RaftClient<KeyValueStore<int>, KeyValueStore<int>.Command, KeyValueStore<int>.Result>(system,TimeSpan.FromSeconds(1), actorCount, "akka://system/user/", 3);
+
+            var clients = Enumerable.Range(1, actorCount)
+                .Select(i => system.ActorOf(TicketClient.Props(actorCount, actorCount, "akka://system/user/", i, 10),
+                    ActorIdResolver.CreateName(i)))
+                .ToArray();
             var runningActors = new HashSet<int>(Enumerable.Range(1, actorCount));
             var stoppedActors = new HashSet<int>();
 
             const string intro = @"
+There are 100 total tickets.
+Change the log level in the actor system config to 'INFO' in order to see what the actors are doing.
 Commands:
     exit
         Quits the program
@@ -59,13 +65,11 @@ Commands:
     stopped
         List stopped actors
     stop x (int)
-        stop actor x
+        stop raft actor x
     start x (int)
-        start actor x
-    get x (string)
-        get value at string in key-value store
-    set x(string) to y(int)
-        set value at x to y in key-value store
+        start raft actor x
+    get x y (int)
+        get x tickets from client y
 ";
             Console.WriteLine(intro);
             while (true)
@@ -94,7 +98,7 @@ Commands:
                     Console.WriteLine("Goodbye");
                     return;
                 }
-                if (split.Length < 2 || (split[0] == "set" && split.Length < 4))
+                if (split.Length < 2 || (split[0] == "get" && split.Length < 3))
                 {
                     Console.WriteLine("Invalid command");
                     Console.WriteLine(intro);
@@ -133,24 +137,12 @@ Commands:
 
                         break;
                     case "get":
-                        var a = (KeyValueStore<int>.ReadResult) await client.RunCommand(
-                            new KeyValueStore<int>.ReadCommand
-                            {
-                                Index = arg
-                            });
-                        Console.WriteLine(arg + " is " + a.Value.ToString());
-                        break;
-                    case "set":
-                        // set _var_ to _val_
-                        var b = (KeyValueStore<int>.WriteResult) await client.RunCommand(
-                            new KeyValueStore<int>.WriteCommand
-                            {
-                                Index = split[1],
-                                SetTo = int.Parse(split[3])
-                            }
-                        );
-                        Console.WriteLine(split[1] + " was previously " + b.OldValue.ToString() + ", is now " +
-                                          split[3].ToString());
+                        int.TryParse(split[2], out var clientId);
+                        var a = await clients[clientId - 1].Ask(new BuyTickets
+                        {
+                            NumTickets = intArg
+                        });
+                        Console.WriteLine("Got response: " + a.ToString());
                         break;
                     default:
                         Console.WriteLine("Unrecognized command");

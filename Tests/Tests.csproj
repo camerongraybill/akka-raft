@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\KeyValueStore\KeyValueStore.csproj" />
       <ProjectReference Include="..\Main\Main.csproj" />
       <ProjectReference Include="..\Raft\Raft.csproj" />
     </ItemGroup>

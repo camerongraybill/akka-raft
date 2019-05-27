@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Raft\Raft.csproj" />
+      <ProjectReference Include="..\TicketSeller\TicketSeller.csproj" />
     </ItemGroup>
 
 </Project>

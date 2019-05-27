@@ -22,7 +22,7 @@ namespace Raft.Utilities
             _actorCount = actorCount;
             _resolver = new IdResolver(actorPath);
             _closestNode = closestNode;
-            SetRandomLeader();
+            _leaderId = _closestNode;
         }
 
         private void SetRandomLeader()

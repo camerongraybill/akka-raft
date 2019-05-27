@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Akka.Util.Internal;
 using Raft.Interfaces;
 
-namespace Main
+namespace KeyValueStore
 {
     public class KeyValueStore<ValueType> : IStateMachine<KeyValueStore<ValueType>.Command, KeyValueStore<ValueType>.Result>
     {
