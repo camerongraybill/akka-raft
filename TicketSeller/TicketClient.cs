@@ -6,7 +6,7 @@ using Akka.Actor;
 using Akka.Event;
 using Raft.Utilities;
 using Debug = System.Diagnostics.Debug;
-using Ticket = System.Guid;
+using Ticket = System.Int32;
 
 namespace TicketSeller
 {
@@ -135,23 +135,35 @@ namespace TicketSeller
         {
             if (_myTickets.Count < _cutoff)
             {
-                var response = await _raftClient.RunCommand(new ReserveTicket.Command
+                var response = await _raftClient.RunCommand(new CommitTicket.Command
                 {
-                    NumTickets = _cutoff
+                    CommitTickets = _committedTickets
                 });
-                if (response is ReserveTicket.Responses.Success success)
+                if (response is CommitTicket.Responses.Success success)
                 {
-                    _myTickets.UnionWith(success.Tickets);
-                }
-                else if (response is ReserveTicket.Responses.Failure failure)
-                {
-                    // We took the last of the tickets, need to reduce cutoff to 0
-                    _cutoff = 0;
-                    _myTickets.UnionWith(failure.Tickets);
+                    if (_committedTickets.Count != success.NewTickets.Count)
+                    {
+                        // They didn't give us enough tickets back, so must be out of tickets
+                        _cutoff = 0;
+                    }
+                    _committedTickets.RemoveMany(_committedTickets.ToList());
+                    _myTickets.UnionWith(success.NewTickets);
                 }
                 else
                 {
                     Debug.Assert(false);
+                }
+            } else if (_cutoff == 0 && _committedTickets.Count != 0)
+            {
+                // If the cutoff is 0 and there are committed tickets, we should commit them
+                var response = await _raftClient.RunCommand(new CommitTicket.Command
+                {
+                    CommitTickets = _committedTickets
+                });
+                if (response is CommitTicket.Responses.Success success)
+                {
+                    _committedTickets.RemoveMany(_committedTickets.ToList());
+                    _myTickets.UnionWith(success.NewTickets);
                 }
             }
         }

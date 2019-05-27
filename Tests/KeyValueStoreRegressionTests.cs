@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Tests
 {
-    public class RegressionTests : TestKit
+    public class KeyValueStoreRegressionTests : TestKit
     {
         [Fact]
         public async Task BasicUsage()

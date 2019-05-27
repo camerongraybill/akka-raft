@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Raft.Interfaces;
-using Ticket = System.Guid;
+using Ticket = System.Int32;
 
 namespace TicketSeller
 {
@@ -77,6 +77,7 @@ namespace TicketSeller
 
     public class TicketStore : IStateMachine<Command, Response>
     {
+        public static int DefaultTicketCount = 100;
         public int NumRemainingTickets => _unreservedTickets.Count;
         public int NumUncommittedTickets => _allTickets.Count - _purchasedTickets.Count;
         private readonly HashSet<Ticket> _allTickets;
@@ -84,13 +85,13 @@ namespace TicketSeller
         private readonly HashSet<Ticket> _reservedTickets = new HashSet<Ticket>();
         private readonly HashSet<Ticket> _purchasedTickets = new HashSet<Ticket>();
 
-        public TicketStore() : this(100)
+        public TicketStore() : this(DefaultTicketCount)
         {
         }
         
         public TicketStore(int numTickets)
         {
-            _allTickets = new HashSet<Ticket>(Enumerable.Range(1, numTickets).Select(i => Ticket.NewGuid()));
+            _allTickets = new HashSet<Ticket>(Enumerable.Range(1, numTickets).Select(i => i));
             _unreservedTickets = new Queue<Ticket>(_allTickets);
         }
 
@@ -128,9 +129,12 @@ namespace TicketSeller
                 {
                     _purchasedTickets.UnionWith(commitReservations.CommitTickets);
                     _reservedTickets.RemoveMany(commitReservations.CommitTickets);
+                    var newTix =
+                        new HashSet<Ticket>(_unreservedTickets.DequeueMany(commitReservations.CommitTickets.Count));
+                    _reservedTickets.UnionWith(newTix);
                     return new CommitTicket.Responses.Success
                     {
-                        NewTickets = new HashSet<Ticket>(_unreservedTickets.DequeueMany(commitReservations.CommitTickets.Count))
+                        NewTickets = newTix
                     };
                 }
 

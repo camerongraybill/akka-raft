@@ -36,6 +36,10 @@ namespace Main
       }
 "));
             const int actorCount = 5;
+            const int numTicketsRemaining = 100;
+
+            TicketStore.DefaultTicketCount = numTicketsRemaining;
+            
             if (Directory.Exists("./states/"))
                 Directory.Delete("./states/", true);
 
@@ -48,7 +52,7 @@ namespace Main
 
 
             var clients = Enumerable.Range(1, actorCount)
-                .Select(i => system.ActorOf(TicketClient.Props(actorCount, actorCount, "akka://system/user/", i, 10),
+                .Select(i => system.ActorOf(TicketClient.Props(actorCount, actorCount, "akka://system/user/", i, numTicketsRemaining / (actorCount*2)),
                     ActorIdResolver.CreateName(i)))
                 .ToArray();
             var runningActors = new HashSet<int>(Enumerable.Range(1, actorCount));
